@@ -66,6 +66,8 @@
         <div class="col-md-6">
             当前${pageinfo.pageNum}页,总${pageinfo.pages}页，总${pageinfo.total}记录
         </div>
+
+<%--        分页条--%>
         <div class="col-md-6">
             <nav aria-label="Page navigation">
                 <ul class="pagination">
