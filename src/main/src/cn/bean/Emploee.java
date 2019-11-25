@@ -1,12 +1,21 @@
 package cn.bean;
 
+import javax.validation.constraints.Pattern;
+
 public class Emploee {
+
+
     private Integer empId;
 
+    //自定义后端 校验规则
+    @Pattern(regexp = "(^[a-z0-9_-]{5,16}$)|(^[\\u2E80-\\u9FFF]{2,5})"
+            ,message ="用户名可以使2-5为中文，或者5-16位英文" )
     private String empName;
 
     private String gender;
 
+    @Pattern(regexp = "^([a-z0-9_\\.-]+)@([\\da-z\\.-]+)\\.([a-z\\.]{2,6})$"
+    ,message = "邮箱格式不正确")
     private String email;
 
     private Integer dId;
