@@ -14,6 +14,72 @@
 </head>
 <body>
 
+<!-- 员工修改的模态框 -->
+<div class="modal fade" id="empUpdateModel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title" >员工修改</h4>
+            </div>
+            <div class="modal-body">
+
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="empname_add_input" class="col-sm-2 control-label">empName</label>
+                        <div class="col-sm-10">
+                           <%-- <input type="text" class="form-control" id="empname_update_input" placeholder="员工姓名"
+                                   name="empName">--%>
+                            <p id="empname_update_input" class="form-control-static"></p>
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email_add_input" class="col-sm-2 control-label">email</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="email_update_input" placeholder="电子邮箱"
+                                   name="email">
+                            <span class="help-block"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="email_add_input" class="col-sm-2 control-label">gender</label>
+                        <div class="col-sm-10">
+                            <label class="radio-inline">
+                                <input type="radio" name="gender" id="gender1_update_input" value="男" checked="checked">男
+                            </label>
+                            <label class="radio-inline">
+                                <input type="radio" name="gender" id="gender2_update_input" value="女">女
+                            </label>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="email_add_input" class="col-sm-2 control-label">部门</label>
+                        <div class="col-sm-4">
+                            <select class="form-control" name="dId">
+                                <%-- 部门id--%>
+
+                            </select>
+                        </div>
+                    </div>
+
+
+                </form>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" id="emp_update_btn">修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
 
 <!-- 员工添加的模态框 -->
 <div class="modal fade" id="empAddModel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -22,7 +88,7 @@
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
                 </button>
-                <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+                <h4 class="modal-title" id="myModalLabel">员工添加</h4>
             </div>
             <div class="modal-body">
 
@@ -92,7 +158,7 @@
     <div class="row">
         <div class="col-md-4 col-md-offset-8">
             <button type="button" class="btn btn-primary" id="emp_add_model_btn">新增</button>
-            <button type="button" class="btn btn-danger">删除</button>
+            <button type="button" class="btn btn-danger" id="delete_emp">删除</button>
         </div>
     </div>
     <%--    表格数据--%>
@@ -101,6 +167,7 @@
             <table class="table table-striped" id="emp_table">
                 <thead>
                 <tr>
+                    <th><input type="checkbox" class="check_all"></th>
                     <th>序列号</th>
                     <th>empName</th>
                     <th>gender</th>
@@ -132,6 +199,8 @@
 
     //设置一个变量，便于添加一个新员工时，能够跳到添加后的最后一页
     var totalRecord;
+    //保存当前页，便于修改员工数据后，跳转当前页，相当于页不发生变化
+    var currentPage;
 
 
     //在页面加载完成后，发送ajax请求，得到分页信息
@@ -168,21 +237,29 @@
         var emps = result.extend.pageinfo.list;
         $.each(emps, function (index, item) {
             //注意，下面值不能为空，否则会出错
+            var checkbox=$("<td></td>").append("<input class='checkbox' type='checkbox' />")
             var empIdTd = $("<td></td>").append(item.empId);
             var empNameTd = $("<td></td>").append(item.empName);
             var genderTd = $("<td></td>").append(item.gender);
             var emailTd = $("<td></td>").append(item.email);
             var departmentTd = $("<td></td>").append(item.department.deptName);
             //按钮
-            var editBtn = $("<buttton></button>").addClass("btn btn-primary btn-sm")
+            var editBtn = $("<buttton></button>").addClass("btn btn-primary btn-sm edit_btn")
                 .append($("<span></span>").addClass("glyphicon glyphicon-pencil").append("编辑"));
-            var delBtn = $("<buttton></button>").addClass("btn btn-danger btn-sm")
+            //为每一个 编辑按钮 添加一个属性，置为id
+            editBtn.attr("emp_id",item.empId);
+            var delBtn = $("<buttton></button>").addClass("btn btn-danger btn-sm delete_btn")
                 .append($("<span></span>").addClass("glyphicon glyphicon-trash"))
                 .append("删除");
 
 
+            //为当前删除按钮添加要删除的员工id
+            delBtn.attr("del_id",item.empId);
+
+
             //append方法执行完成后，返回还是原来的元素，所以可以这样不断追加元素
-            $("<tr></tr>").append(empIdTd)
+            $("<tr></tr>").append(checkbox)
+                .append(empIdTd)
                 .append(empNameTd)
                 .append(genderTd)
                 .append(emailTd)
@@ -202,6 +279,8 @@
 
         //记录添加员工后的记录数，便于下面使用来 跳转到 最后一页
         totalRecord = result.extend.pageinfo.total;
+
+        currentPage=result.extend.pageinfo.pageNum;
     }
 
     //分页条
@@ -285,16 +364,24 @@
     }
 
     //------------------------------------------------------------------
+
+    function empty(ele){
+        $(ele)[0].reset();
+        $(ele).find("*").removeClass("has-success has-error");
+        $(ele).find(".help-block").text("");//清空提示框的文本
+    }
+
     //点击添加按钮，弹出模态框
     $("#emp_add_model_btn").click(function () {
         //清楚表单(jquery没有这个方法  dom才有)
-        $("#empAddModel form")[0].reset();
+/*        $("#empAddModel form")[0].reset();
         $("#empAddModel form").find("*").removeClass("has-success has-error");
-        $("#empAddModel form").find(".help-block").text("");//清空提示框的文本
+        $("#empAddModel form").find(".help-block").text("");//清空提示框的文本*/
 
+        empty("#empAddModel form");
 
         //在弹出之前，发送ajax，查询部门信息
-        getDepts();
+        getDepts("#empAddModel select");
 
         $("#empAddModel").modal({
             backdrop: "static"
@@ -302,7 +389,11 @@
     });
 
     //ajax 查询部门信息
-    function getDepts() {
+    function getDepts(ele) {
+
+        //显示前清空原来的部门信息
+        $(ele).empty();
+
         $.ajax({
             url: "/depts",
             type: "get",
@@ -311,7 +402,7 @@
                 //返回的是ajax
                 $.each(result.extend.dep, function () {
                     var optionEle = $("<option></option>").append(this.deptName).attr("value", this.deptId);
-                    optionEle.appendTo("#empAddModel select");
+                    optionEle.appendTo(ele);
                 });
             }
         });
@@ -447,6 +538,154 @@
         } else {
             return false;
         }
+    });
+
+
+    //绑定点击事件,由于是创建按钮时后创建，事件的先绑定，所以绑定不上，需要使用下面的方法
+    //link方法，但是1.7版本后该方法被删除了，使用on 代替
+  /*  $(".edit_btn").link(function () {
+        alert("saas");
+    })*/
+    $(document).on("click",".edit_btn",function () {
+
+        //查询部门信息
+        getDepts("#empUpdateModel select");
+
+        //显示员工信息
+        getEmp($(this).attr("emp_id"));
+
+        //点击编辑时，为每一个修改按钮添加一个属性，值为 员工id，方便下面操作能够获取到员工id值
+        $("#emp_update_btn").attr("emp_id",$(this).attr("emp_id"));
+
+        //弹出模态框
+        $("#empUpdateModel").modal({
+            backdrop: "static"
+        });
+
+
+
+    });
+     function getEmp(id){
+         $.ajax({
+             url:"/emp/"+id,
+             type:"get",
+             success:function (result) {
+                 /*console.log(result);*/
+                 var empDate=result.extend.emp;
+                 $("#empname_update_input").text(empDate.empName);
+                 $("#email_update_input").val(empDate.email);
+                 $("#empUpdateModel input[name=gender]").val([empDate.gender]);
+                 $("#empUpdateModel select").val([empDate.dId]);
+             }
+
+         });
+     }
+
+     //点击更新
+    $("#emp_update_btn").click(function () {
+        var email=$("#email_update_input").val();
+        var regEmail=/^([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})$/;
+        if (!regEmail.test(email)){
+            show_validate_msg("#email_update_input","error","邮箱错误");
+            return false;
+        }else{
+            show_validate_msg("#email_update_input","success","");
+        }
+        //发送ajax请求
+        //发方式一：在发送数据后面添加&_method=PUT ，既是会post请求转成put请求，因为在web.xml过滤器中配置了HiddenHttpMethodFilter
+        // $.ajax({
+        //     url:"/emp/"+$(this).attr("emp_id"),
+        //     type:"get",
+        //     data:$("#empUpdateModel form").serialize()+"&_method=PUT",
+        //     success:function (result) {
+        //         alert(result.msg);
+        //     }
+        // });
+
+        /*
+        直接发put请求，需要在web.xml配置org.springframework.web.filter.HttpPutFormContentFilter过滤器。
+        它的作用：将请求体中的数据解析包装成一个map，request被重新包装，request。getParameter()
+        被重写。数据会重自己的封装的map中取数据
+              方法二：ajax支持直接发送put请求。但是tomcat默认不会对put请求进行封装，
+         */
+        $.ajax({
+            url:"/emp/"+$(this).attr("emp_id"),
+            type:"put",
+            data:$("#empUpdateModel form").serialize(),
+            success:function (result) {
+              //  alert(result.msg);
+
+                //关闭模态框
+                $("#empUpdateModel").modal('hide');
+                //回到当前页
+                to_page(currentPage);
+            }
+        });
+    });
+
+
+     //删除员工
+    $(document).on("click",".delete_btn",function(){
+        //
+       var empName=($(this).parents('tr').find("td").eq(2).text());
+       var id=$(this).attr("del_id");
+       console.log(id);
+        if(confirm("确认删除【"+empName+"】?")){
+            $.ajax({
+                url:"/emp/"+id,
+                type:"DELETE",
+                success:function (result) {
+                   // alert(result.msg);
+                    to_page(currentPage);
+                }
+            });
+        }
+    })
+
+    //点击全选
+    $(".check_all").click(function () {
+        //原生dom的属性，使用prop来获取和修改，attr（）用来获取自定义的属性
+      //  alert($(this).prop("checked"))
+        $(".checkbox").prop("checked",$(this).prop("checked"));
+    });
+
+    //点击单个,由于这个是后面创建的，所以使用on
+    $(document).on("click",".checkbox",function(){
+      //  alert($(".checkbox:checked").length);
+        if($(".checkbox:checked").length===5){
+            $(".check_all").prop("checked",true)
+        }else{
+            $(".check_all").prop("checked",false)
+        }
+    });
+
+    //对于被选中的，进行删除
+    $("#delete_emp").click(function(){
+        var ids="";
+
+        //遍历每一个被选中的
+        $.each($(".checkbox:checked"),function(){
+         // console.log($(this).parents('tr').find("td:eq(2)").text())
+            ids+=$(this).parents('tr').find("td:eq(1)").text()+"-";
+        })
+       //console.log(ids);
+       ids=ids.substring(0,ids.length-1);
+        console.log(ids);
+        $.ajax({
+            url:"/emp/"+ids,
+            type:"delete",
+            success:function (result) {
+               // console.log(result);
+                if (result.code==100){
+                    console.log("成功")
+                }else{
+                    console.log("失败")
+                }
+
+                to_page(currentPage);
+            }
+        });
+
     });
 </script>
 

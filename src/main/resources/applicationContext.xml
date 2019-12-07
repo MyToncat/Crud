@@ -73,7 +73,7 @@
 
     <tx:advice id="txAdvice">
         <tx:attributes>
-<!--            所有方法都是事务-->
+     <!--    所有方法都是事务-->
             <tx:method name="*" />
             <tx:method name="get*" read-only="true" />
         </tx:attributes>

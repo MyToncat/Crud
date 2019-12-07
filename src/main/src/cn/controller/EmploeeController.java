@@ -23,6 +23,48 @@ public class EmploeeController {
     @Autowired
     EmploeeService emploeeService;
 
+    //删除员工
+    @ResponseBody
+    @RequestMapping(value="/emp/{id}",method = RequestMethod.DELETE)
+    public Msg deletEmpBYId(@PathVariable("id") String ids){
+
+       if (ids.contains("-")){
+           //多个
+           String[] list = ids.split("-");
+           for (int i = 0; i <list.length ; i++) {
+             //  System.out.println(list[i]);
+               emploeeService.deletEmp(Integer.parseInt(list[i]));
+           }
+       }else{
+           //一个
+           int i = Integer.parseInt(ids);
+          // System.out.println(i);
+           emploeeService.deletEmp(i);
+       }
+        return Msg.success();
+    }
+
+
+
+
+    @ResponseBody
+    @RequestMapping(value = "/emp/{empId}",method = {RequestMethod.PUT})
+    public Msg saveEmp(Emploee emploee){
+       emploeeService.updateEmp(emploee);
+       return Msg.success();
+    }
+
+
+
+    //根据id查询员工
+    @ResponseBody
+    @RequestMapping(value = "/emp/{id}",method = {RequestMethod.GET})
+    public Msg getEmp(@PathVariable("id") Integer id){
+       Emploee emploee= emploeeService.getEmp(id);
+       return Msg.success().add("emp",emploee);
+    }
+
+
 
     /**校验是否可以用
      * @param empname
